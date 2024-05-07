@@ -1,0 +1,213 @@
+---
+title: "Assignment 2"
+author: "Sai Prasad"
+date: "2024-02-20"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+---
+title: "Assignment"
+author: "Sai Prasad"
+date: "2024-02-18"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+#Importing libraries of class, dpylr, caret & Dataset. Created a dataset called as "dataset_universal"
+```{r}
+
+library(class)
+library(dplyr)
+library(caret)
+dataset_universal <- read.csv("C:\\Users\\desineni\\OneDrive - Kent State University\\Desktop\\boyapati\\sem_1\\fml\\UniversalBank.csv")
+
+```
+
+
+Excluding unnecessory columns from the above dataset i.e,, ID, ZIP.Code
+```{r}
+dataset_universal1 <- dataset_universal[,-1]
+dataset_universal1 <- dataset_universal1[,-4]
+
+```
+
+Conveting Personal.Loan into a factor
+```{r}
+dataset_universal$Personal.Loan=as.factor(dataset_universal$Personal.Loan)
+head(dataset_universal$Personal.Loan)
+```
+
+Executing above dataset with .na if there is any NA values
+```{r}
+head(is.na(dataset_universal1))
+any(is.na(dataset_universal1))
+```
+Converting categorical variable into i.e education into dummy variables
+
+Here we are converting Education into factor. There are three levels in Education
+```{r}
+ 
+education = as.character(dataset_universal1$Education)
+
+head(dataset_universal1)
+dataset_universal2 <- cbind(dataset_universal1[,-6],education)
+head(dataset_universal2)
+
+dummymodel<-dummyVars("~education",data = dataset_universal2)
+educationdummy<-data.frame(predict(dummymodel,dataset_universal2))
+head(educationdummy)
+dataset_universal_dummy<-cbind(dataset_universal2[,-12],educationdummy)
+head(dataset_universal_dummy)
+
+```
+```{r}
+
+set.seed(123)
+train<-createDataPartition(dataset_universal_dummy$Personal.Loan,p=0.60,list = FALSE)
+train_set<-dataset_universal_dummy[train,]
+nrow(train_set)
+validation_set<-dataset_universal_dummy[-train,]
+nrow(validation_set)
+test_set<-data.frame(Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2,  Mortgage = 0, Securities.Account = 0, CD.Account = 0, Online = 1, 
+      CreditCard = 1,education1 = 0, education2 = 1, education3 = 0)
+
+
+summary(train_set)
+summary(validation_set)
+summary(test_set)
+normvar<-c('Age',"Experience","Income","Family","CCAvg","Mortgage","Securities.Account","CD.Account","Online","CreditCard","education1","education2","education3")
+normalization_values<-preProcess(train_set[,normvar],method = c('center','scale'))
+
+trainset_norm<-predict(normalization_values,train_set)
+summary(trainset_norm)
+
+validationset_norm<-predict(normalization_values,validation_set)
+summary(validationset_norm)
+
+testset_norm<-predict(normalization_values,test_set)
+summary(testset_norm)
+```
+
+
+#1: Classifying the given customer data
+```{r}
+
+set.seed(123)
+newgrid<-expand.grid(k=c(1))
+newmodel<-train(Personal.Loan~.,data=trainset_norm,method="knn",tuneGrid=newgrid)
+
+newmodel
+
+predicting_test<-predict(newmodel,testset_norm)
+predicting_test
+
+```
+#Question 2: What is a choice of k that balances between overfiƫng and ignoring the predictor information?
+#identifying the best k and finding the best k
+```{r}
+
+set.seed(123)
+searchGrid <- expand.grid(k=seq(1:20))
+model_data<-train(Personal.Loan~.,data=trainset_norm,method="knn",tuneGrid=searchGrid)
+model_data
+
+plot(model_data$results$k,model_data$results$Accuracy, type = 'o',pch = 16)
+
+
+best_k <- model_data$bestTune[[1]]
+best_k
+```
+#Question 3:Confusion matrix for the validation data that results from using the best k
+```{r}
+
+library(gmodels)
+
+train_label<-trainset_norm[,7]
+validation_label<-validationset_norm[,7]
+test_label<-testset_norm[,7]
+
+predicted_validationlabel<-knn(trainset_norm,validationset_norm,cl=train_label,k=5)
+
+CrossTable(x=validation_label,y=predicted_validationlabel,prop.chisq = FALSE)
+```
+```{r}
+#Question 4:Classifying the given customer with best k
+set.seed(123)
+best_k_grid<-expand.grid(k=c(best_k))
+best_k_model<-train(Personal.Loan~.,data=trainset_norm,method="knn",tuneGrid=best_k_grid)
+best_k_model
+
+best_k_test<-predict(best_k_model,testset_norm)
+best_k_test
+
+```
+#Question5:confusion matrix for validation and training sets
+#dividing dataset into traning, validation and testing set
+```{r}
+
+#Question5:confusion matrix for validation and training sets
+#dividing dataset into traning, validation and testing set
+set.seed(123)
+training_1<-createDataPartition(dataset_universal_dummy$CD.Account ,p=0.50,list = FALSE)
+train_set_2<-dataset_universal_dummy[training_1,]
+middleset<-dataset_universal_dummy[-training_1,]
+nrow(middleset)
+training_2<-createDataPartition(middleset$CD.Account,p=0.6,list = FALSE)
+validation_set_2<-middleset[training_2,]
+test_set_2<-middleset[-training_2,]
+
+nrow(train_set_2)
+nrow(validation_set_2)
+nrow(test_set_2)
+
+head(train_set_2)
+#normalizing trainset_2,validationset_2,testset_2
+
+normvar<-c('Age',"Experience","Income","Family","CCAvg","Mortgage","Securities.Account","CD.Account","Online","CreditCard","education1","education2","education3")
+normalization_values_2 <- preProcess(train_set_2[,normvar],method = c('center','scale'))
+
+trainset_norm_2<-predict(normalization_values_2,train_set_2)
+summary(trainset_norm_2)
+
+validationset_norm_2<-predict(normalization_values_2,validation_set_2)
+summary(validationset_norm_2)
+
+testset_norm_2<-predict(normalization_values_2,test_set_2)
+summary(testset_norm_2)
+
+#confusion matrix
+library(gmodels)
+
+train_label_2<-trainset_norm_2[,7]
+validation_label_2<-validationset_norm_2[,7]
+testing_label_2<-testset_norm_2[,7]
+
+predicted_validation_label_2<-knn(trainset_norm_2,validationset_norm_2,cl=train_label_2,k=best_k)
+
+predicted_test_label_2<-knn(trainset_norm_2,testset_norm_2,cl=train_label_2,k=best_k)
+
+confusionmatrix_1<-CrossTable(x=validation_label_2,y=predicted_validation_label_2,prop.chisq = FALSE)
+confusionmatrix_2<-CrossTable(x=testing_label_2,y=predicted_test_label_2,prop.chisq = FALSE)
+
+
+validation_table<-table(validation_label_2,predicted_validation_label_2)
+confusionMatrix(validation_table)
+
+test_table<-table(testing_label_2,predicted_test_label_2)
+confusionMatrix(test_table)
+
+
+
+```
+# on comparing the confusion matrix of validation set and testing set it can be seen that accuracy and sensitivity of validation is slightly greater than test set
+
+
+
+
+
+
+

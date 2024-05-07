@@ -1,0 +1,61 @@
+---
+title: "sboyapa1"
+author: "Sai Prasad"
+date: "2024-01-26"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+ Here uploding my dataset House_rent_Dataset
+```{r}
+rental_data <- read.csv("C:\\Users\\desineni\\Downloads\\House_Rent_Dataset (1).csv")
+```
+```{r}
+summary(rental_data)
+```
+ Here printing descriptive statistics for a selection of quantitative from dataset which was "Size"
+```{r}
+summary(rental_data$Size)
+```
+ Here printing descriptive statistics for a selection of categorical variable is Area.Locatlity
+```{r}
+summary(rental_data$Area.Locality)
+```
+Here I am creating variable "coupon" And assigning it to square root of a rent. Finally applying to new varaible "new_rent" where it means rent after applying the coupon\
+
+
+
+```{r}
+coupon <- sqrt(rental_data$Rent)
+View(rental_data)
+View(coupon)
+```
+```{r}
+# Transforming Rent variables of the dataset
+new_rent <- (rental_data$Rent-coupon)
+head(new_rent)
+```
+Here I am plotting a scatter plot Size vesus Rent. Because Rent depends on the Size.\ Scale \ x-axis is size of the House \ y-axis is rent of the House
+```{r}
+
+plot(rental_data$Size,rental_data$Rent)
+
+```
+```{r}
+library(ggplot2)
+```
+```{r}
+
+rental_mean <- aggregate(Rent ~ City, data = rental_data, FUN = mean)
+
+# Creating Barplot Rent Versus City. 
+barplot(rental_mean$Rent, names.arg = rental_mean$City)
+
+```
+the people living Mumbai have highest Rent whereas the people living Kolkata have  least Rent.\
+
+
+
+Source of the data used for this task: https://www.kaggle.com/code/prashantverma13/house-rent-prediction-in-depth-analysis-models/input?select=House_Rent_Dataset.csv
+

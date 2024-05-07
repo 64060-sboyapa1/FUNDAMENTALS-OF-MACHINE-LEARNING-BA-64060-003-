@@ -1,0 +1,125 @@
+---
+title: "Assignment 3"
+author: "Sai Prasad"
+date: "2024-03-04"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+Importing packages of caret, e1071, ISLR, reshape2,table, melt, cast and dataset. 
+```{r}
+library(caret)
+library(e1071)
+library(ISLR)
+library(tables)
+library(melt)
+library(CAST)
+# Here I had created dataset as dataset_universal  
+dataset_universal<-read.csv("C:\\Users\\sidda\\Downloads\\UniversalBank (1).csv")
+#converting variables into factor
+dataset_universal$Personal.Loan<-factor(dataset_universal$Personal.Loan)
+dataset_universal$Online<-factor(dataset_universal$Online)
+dataset_universal$CreditCard<-factor(dataset_universal$CreditCard)
+
+# Here I was doing partition of data into training and validation sets.  And named as training_set and vaslidating_set 
+set.seed(5097)
+train_universal<-createDataPartition(dataset_universal$Personal.Loan,p=0.6,list = FALSE)
+training_set<-dataset_universal[train_universal,]
+validating_set<-dataset_universal[-train_universal,]
+nrow(training_set)
+nrow(validating_set)
+```
+# Question A
+Creating  a pivot table for the training data with Online as a column variable, CC as a row variable, and Loan
+as a secondary row variable. The values inside the table should convey the count. 
+
+```{r}
+table<-xtabs(~CreditCard+Personal.Loan+Online,data=training_set)
+ftable(table)
+
+```
+# Question B
+Consider the task of classifying a customer who owns a bank credit card and is acƟvely using online
+banking services. Looking at the pivot table, what is the probability that this customer will accept the loan
+offer? [This is the probability of loan acceptance (Loan = 1) condiƟonal on having a bank credit card (CC =
+1) and being an acƟve user of online banking services (Online
+= 1)].
+
+```{r}
+53/(53+461)
+```
+# Quetion C 
+Create two separate pivot tables for the training data. One will have Loan (rows) as a funcƟon of Online
+(columns) and the other will have Loan (rows) as a funcƟon of CC. 
+```{r}
+table(Personal.Loan=training_set$Personal.Loan,
+      Online=training_set$Online)
+```
+```{r}
+table(Personal.Loan=training_set$Personal.Loan,
+      CreditCard=training_set$CreditCard)
+```
+```{r}
+table(Personal.Loan=training_set$Personal.Loan)
+```
+#Question D.
+Compute the following quantities 
+[P(A | B) means “the probability ofA given B”]:
+i. P(CC = 1 | Loan = 1) (the proporƟon of credit card holders among the loan acceptors)
+ii. P(Online = 1 | Loan = 1)
+iii. P(Loan = 1) (the proporƟon of loan acceptors)
+iv. P(CC = 1 | Loan = 0)
+v. P(Online = 1 | Loan = 0)
+vi. P(Loan = 0)
+```{r}
+#i.P(CC = 1 | Loan = 1)
+P1=89/(89+199)
+P1
+#ii. P(Online = 1 | Loan = 1)  
+P2=174/(174+114)
+P2
+#iii. P(Loan = 1) 
+P3=288/(288+2712)
+P3
+#iv. P(CC = 1 | Loan = 0) 
+P4=771/(771+1941)
+P4
+#v. P(Online = 1 | Loan = 0) 
+P5=1637/(1637+1075)
+P5
+#vi. P(Loan = 0) 
+P6=2712/(288+2712)
+P6
+```
+
+#Question E
+Use the quanƟƟes computed above to compute the naive Bayes probability P(Loan = 1 | CC = 1, Online = 1).
+```{r}
+ 
+(P1*P2*P3)/((P1*P2*P3)+(P4*P5*P6))
+
+```
+
+#Question F
+Compare this value with the one obtained from the pivot table in (B). Which is a more accurate estimate?
+#Answer
+       The likelihood obtained from the pivot table is 0.1031128, while the probability calculated through naive Bayes is 0.1035734. Naive Bayes operates under the assumption of attribute independence, which can affect its accuracy. Therefore, the probability derived from the pivot table is deemed to be more precise than that from naive Bayes.
+
+
+#Question G
+Which of the entries in this table are needed for compuƟng P(Loan = 1 | CC = 1, Online = 1)? Run naive
+Bayes on the data. Examine the model output on training data, and find the entry that corresponds to
+P(Loan = 1 | CC = 1, Online = 1). Compare this to the number you obtained in (E).
+Here we are creating a data frame named as test_data. And converting into factors
+
+```{r}
+Naive_bayes_model<-naiveBayes(Personal.Loan~CreditCard+Online,data = training_set)
+test_data<-data.frame(CreditCard=1,Online=1)
+test_data$CreditCard<-factor(test_data$CreditCard)
+test_data$Online<-factor(test_data$Online)
+predict(Naive_bayes_model,test_data,type = 'raw')
+```
+
+
+

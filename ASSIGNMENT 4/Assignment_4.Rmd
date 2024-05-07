@@ -1,0 +1,146 @@
+---
+title: "Assignment 4"
+author: "Sai Prasad"
+date: "2024-03-31"
+output:
+  pdf_document: default
+  html_document: default
+---
+Here I am importing requrired libraries and dataset. And removing NA (missing) values
+```{r}
+library(tidyverse)
+library(factoextra)
+pharma_data<-read.csv("C://Users//desineni//Downloads//Pharmaceuticals (2).csv")
+pharma_data<-na.omit(pharma_data)
+```
+Employing the numerical variables (from 1 to 9) to group the 21 companies into clusters
+```{r}
+row.names(pharma_data)<-pharma_data[,1]
+clustered_data<-pharma_data[,3:11]
+
+```
+Here I am scaling the clutertered data
+```{r}
+set.seed(5097)
+scaling_data<-scale(clustered_data)
+
+```
+
+Here I was doing K-means clustering with randomly selected K values.
+```{r}
+set.seed(5097)
+k_mean1<-kmeans(scaling_data,centers = 2, nstart = 15)
+k_mean4<-kmeans(scaling_data,centers = 4, nstart = 15)
+k_mean8<-kmeans(scaling_data,centers = 8, nstart = 15)
+
+plot_k_mean1<-fviz_cluster(k_mean1,data = scaling_data) + ggtitle("K=2")
+plot_k_mean4<-fviz_cluster(k_mean4,data = scaling_data) + ggtitle("K=4")
+plot_k_mean8<-fviz_cluster(k_mean8,data = scaling_data) + ggtitle("K=8")
+
+plot_k_mean1
+plot_k_mean4
+plot_k_mean8
+
+
+```
+
+Employing WSS (Within-Cluster Sum of Square) and Silhouette scores to identify 
+the optimal K value for clustering.
+
+```{r}
+K_WSS<-fviz_nbclust(scaling_data,kmeans,method="wss")
+K_Silhouette<-fviz_nbclust(scaling_data,kmeans,method="silhouette")
+K_WSS
+K_Silhouette
+dist<-dist(scaling_data,metho='euclidean')
+fviz_dist(dist)
+```
+Based on the WSS, the optimal number of clusters (k) is 2, whereas the Silhouette score suggests k is 5. We are opting for k=5 as it guarantees a lower within-cluster sum of squares while also ensuring satisfactory separation between clusters.
+
+
+
+Here I was doing K Means to the required K
+```{r}
+set.seed(5097)
+k_mean5<-kmeans(scaling_data,centers = 5, nstart = 10)
+k_mean5
+plot_kmeans5<-fviz_cluster(k_mean5,data = scaling_data) + ggtitle("K=5")
+plot_kmeans5
+
+clustering_data1<-clustered_data%>%
+  mutate(Cluster_no=k_mean5$cluster)%>%
+  group_by(Cluster_no)%>%summarise_all('mean')
+clustering_data1
+
+```
+Below companies are grouped into following clusters:
+
+
+Cluster_1= BAY,CHTT,IVX
+
+
+Cluster_2= AVE,ELN,MRX,WPI 
+
+
+Cluster_3=AGN,PHA
+
+
+Cluster_4= ABT,AHM,AZN,BMY,LLY,NVS,SGP,WYE
+
+
+Cluster_5=GSK,JNJ,PFE,MRK
+
+
+
+
+From the clusters formed it can be understood that 
+
+
+1. Cluster_1 includes companies with extremely poor ROA, ROE, market capitalization, and asset turnover, indicating a high level of risk associated with these firms.
+
+
+2. Cluster_2  has companies collect firms resembling those in cluster_1, but with a bit less risk involved.
+
+
+3. Cluster_3 has companies possess an excellent PE_ratio but suffer from very poor ROA and ROE, making them riskier than those in cluster_1.
+
+
+4. Cluster_4 has collection of businesses with moderate return on equity and return on investment.
+
+
+5. Cluster_5 has companies exhibiting excellent market capitalization, ROE, and ROA
+
+
+```{r}
+clustering_dataset2<- pharma_data[,12:14] %>% mutate(Clusters=k_mean5$cluster)
+ggplot(clustering_dataset2, mapping = aes(factor(Clusters), fill =Median_Recommendation))+geom_bar(position='dodge')+labs(x ='Clusters')
+ggplot(clustering_dataset2, mapping = aes(factor(Clusters),fill = Location))+geom_bar(position = 'dodge')+labs(x ='Clusters')
+ggplot(clustering_dataset2, mapping = aes(factor(Clusters),fill = Exchange))+geom_bar(position = 'dodge')+labs(x ='Clusters')
+
+
+```
+
+It's observable that there's a trend between clusters and the Median Recommendation variable. For instance, the first cluster implies a recommendation ranging from hold to moderate buy, while the second cluster leans towards a moderate buy to moderate sell suggestion.
+The location graph indicates that a majority of the pharmaceutical companies are based in the US, and there doesn't appear to be a significant pattern beyond that.
+The clusters do not exhibit a distinct pattern in relation to the stock exchange, aside from the observation that the bulk of the companies are traded on the NYSE.
+
+
+Naming clusters:
+
+
+[Based on the companies listed for each cluster, which seem to represent pharmaceutical firms]
+
+
+Cluster 1: Innovative Biotech Pioneers.
+
+
+Cluster 2: Specialty Pharma Developers.
+
+
+Cluster 3:Focused Healthcare Duo.
+
+
+Cluster 4: Diversified Healthcare Giants.
+
+
+Cluster 5: Global Healthcare Leaders.
